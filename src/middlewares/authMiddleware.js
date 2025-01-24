@@ -20,17 +20,24 @@ const protect = async (req, res, next) => {
       if (!decoded.id) {
         return res
           .status(401)
-          .json({ success: false, message: "please provide userID" });
+          .json({ success: false, message: "Please provide userID" });
       }
 
       // Find the user by ID and exclude the password from the response
-      req.user = await prisma.User.findById(decoded.id).select("-Password");
+      req.user = await prisma.user.findUnique({
+        where: {
+          id: decoded.id,
+        },
+        select: {
+          Password: false, // Exclude password from the response
+        },
+      });
 
-      // Check if the user exists
-      if (!req.user || req.user.IsActive == 0) {
+      // Check if the user exists and is active
+      if (!req.user || req.user.IsActive === 0) {
         return res
           .status(401)
-          .json({ success: false, message: "User not found" });
+          .json({ success: false, message: "User not found or inactive" });
       }
 
       next(); // Proceed to the next middleware/route handler
